@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
-interface Employee { name: string; note: string; }
+interface Employee { name: string; position: string; note: string; }
 
 export async function POST(req: NextRequest) {
   const { company, workDate, department, controller, jobDetail, area,
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     '<tr>'
     + '<td class="num">' + (i + 1) + '</td>'
     + '<td class="name">' + (emp.name || '&nbsp;') + '</td>'
+    + '<td class="pos">' + (emp.position || '&nbsp;') + '</td>'
     + '<td class="time">&nbsp;</td>'
     + '<td class="sign">&nbsp;</td>'
     + '<td class="time">&nbsp;</td>'
@@ -54,11 +55,12 @@ export async function POST(req: NextRequest) {
     + '.main-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9.5pt; }'
     + '.main-table th { background-color: #1a3a5c; color: #fff; border: 1px solid #1a3a5c; padding: 5px 4px; text-align: center; font-weight: 600; }'
     + '.main-table td { border: 1px solid #999; padding: 4px 5px; min-height: 20px; }'
-    + '.num { text-align: center; width: 8%; }'
-    + '.name { width: 24%; }'
-    + '.time { text-align: center; width: 10%; }'
-    + '.sign { text-align: center; width: 13%; }'
-    + '.note { text-align: center; width: 22%; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; word-break: break-all; }'
+    + '.num { text-align: center; width: 7%; }'
+    + '.name { width: 22%; }'
+    + '.pos { width: 14%; }'
+    + '.time { text-align: center; width: 9%; }'
+    + '.sign { text-align: center; width: 12%; }'
+    + '.note { text-align: center; width: 18%; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; word-break: break-all; }'
     + '.main-table tbody tr:nth-child(even) { background-color: #f8f9fa; }'
     + '.footer-note { font-size: 8.5pt; color: #444; margin-bottom: 16px; line-height: 1.6; border-left: 3px solid #1a3a5c; padding-left: 8px; }'
     + '.sig-area { text-align: center; float: right; margin-top: 10px; width: 55mm; }'
@@ -86,6 +88,7 @@ export async function POST(req: NextRequest) {
     + '<thead><tr>'
     + '<th class="num">ลำดับที่</th>'
     + '<th class="name">ชื่อ - สกุล</th>'
+    + '<th class="pos">ตำแหน่ง</th>'
     + '<th class="time">เวลาเข้า</th>'
     + '<th class="sign">ลงชื่อเข้า</th>'
     + '<th class="time">เวลาออก</th>'

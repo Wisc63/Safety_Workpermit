@@ -6,14 +6,13 @@ export async function GET(req: NextRequest) {
   const department = searchParams.get('department');
   try {
     const pool = await getPool();
-    const query = 'SELECT * FROM dbo.Personnel ORDER BY Department, Person_Name';
     if (department) {
       const result = await pool.request()
         .input('dept', sql.NVarChar(5), department)
-        .query('SELECT * FROM dbo.Personnel WHERE Department = @dept ORDER BY Person_Name, Person_LastName');
+        .query('SELECT * FROM dbo.Personnel WHERE Department = @dept ORDER BY Person_Name');
       return NextResponse.json(result.recordset);
     }
-    const result = await pool.request().query(query);
+    const result = await pool.request().query('SELECT * FROM dbo.Personnel ORDER BY Department, Person_Name');
     return NextResponse.json(result.recordset);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Database error';
@@ -22,14 +21,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { Department, Person_Name, Person_LastName } = await req.json();
+  const { Department, Person_Name, Personnel_Tel } = await req.json();
   try {
     const pool = await getPool();
     await pool.request()
       .input('dept', sql.NVarChar(5), Department)
-      .input('name', sql.NVarChar(30), Person_Name)
-      .input('lastname', sql.NVarChar(30), Person_LastName)
-      .query('INSERT INTO dbo.Personnel (Department, Person_Name, Person_LastName) VALUES (@dept, @name, @lastname)');
+      .input('name', sql.NVarChar(200), Person_Name)
+      .input('tel', sql.NVarChar(10), Personnel_Tel || null)
+      .query('INSERT INTO dbo.Personnel (Department, Person_Name, Personnel_Tel) VALUES (@dept, @name, @tel)');
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Database error';
@@ -38,15 +37,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const { ID, Department, Person_Name, Person_LastName } = await req.json();
+  const { ID, Department, Person_Name, Personnel_Tel } = await req.json();
   try {
     const pool = await getPool();
     await pool.request()
       .input('id', sql.Int, ID)
       .input('dept', sql.NVarChar(5), Department)
-      .input('name', sql.NVarChar(30), Person_Name)
-      .input('lastname', sql.NVarChar(30), Person_LastName)
-      .query('UPDATE dbo.Personnel SET Department=@dept, Person_Name=@name, Person_LastName=@lastname WHERE ID=@id');
+      .input('name', sql.NVarChar(200), Person_Name)
+      .input('tel', sql.NVarChar(10), Personnel_Tel || null)
+      .query('UPDATE dbo.Personnel SET Department=@dept, Person_Name=@name, Personnel_Tel=@tel WHERE ID=@id');
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Database error';

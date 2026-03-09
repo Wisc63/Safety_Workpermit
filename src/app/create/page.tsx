@@ -20,15 +20,16 @@ import { cn } from '@/lib/utils';
 interface Contractor {
   ID: number;
   Contractor: string;
-  Foreman_Name: string;
-  Foreman_Tel: string;
+  Worker_Name: string;
+  Worker_Tel: string;
+  Worker_Position: string;
+  Training_status: string;
 }
 
 interface Personnel {
   ID: number;
   Department: string;
   Person_Name: string;
-  Person_LastName: string;
 }
 
 interface WorkPermit {
@@ -52,8 +53,9 @@ interface WorkPermit {
 
 interface SelectedContractor {
   contractor: string;
-  foremanName: string;
-  foremanTel: string;
+  workerName: string;
+  workerTel: string;
+  trainingStatus: string;
 }
 
 function formatDateDisplay(dateStr: string): string {
@@ -151,24 +153,26 @@ export default function CreatePage() {
     if (!selectedContractorCompany || !selectedForemanId) return;
     const c = contractors.find(x => x.ID === parseInt(selectedForemanId));
     if (!c) return;
-    if (selectedContractors.find(s => s.contractor === c.Contractor && s.foremanName === c.Foreman_Name)) return;
-    setSelectedContractors(prev => [...prev, { contractor: c.Contractor, foremanName: c.Foreman_Name, foremanTel: c.Foreman_Tel }]);
+    if (selectedContractors.find(s => s.contractor === c.Contractor && s.workerName === c.Worker_Name)) return;
+    setSelectedContractors(prev => [...prev, { contractor: c.Contractor, workerName: c.Worker_Name, workerTel: c.Worker_Tel, trainingStatus: c.Training_status }]);
     setSelectedForemanId('');
   };
 
   const uniqueCompanies = Array.from(new Set(contractors.map(x => x.Contractor))).sort();
-  const availableForemen = contractors.filter(x => x.Contractor === selectedContractorCompany);
+  const availableForemen = contractors.filter(x => x.Contractor === selectedContractorCompany && x.Worker_Position === 'Foreman');
 
-  const removeContractor = (contractor: string, foremanName: string) => {
-    setSelectedContractors(prev => prev.filter(c => !(c.contractor === contractor && c.foremanName === foremanName)));
+  const removeContractor = (contractor: string, workerName: string) => {
+    setSelectedContractors(prev => prev.filter(c => !(c.contractor === contractor && c.workerName === workerName)));
   };
 
   const buildContractorStr = () => selectedContractors.map(c => c.contractor).join(', ');
-  const buildTelStr = () => selectedContractors.map(c => c.foremanTel).join(', ');
-  const buildForemanStr = () => selectedContractors.map(c => c.foremanName).join(', ');
+  const buildTelStr = () => selectedContractors.map(c => c.workerTel).join(', ');
+  const buildForemanStr = () => selectedContractors.map(c => c.workerName).join(', ');
 
   const validateForm = (): string | null => {
     if (selectedContractors.length === 0) return 'กรุณาเลือกผู้รับเหมาอย่างน้อย 1 ราย';
+    const expiredForeman = selectedContractors.find(c => c.trainingStatus === 'Expired');
+    if (expiredForeman) return `Foreman "${expiredForeman.workerName}" มีสถานะ Expired กรุณาอัปเดตการฝึกอบรมก่อน`;
     if (!form.Request_For.trim()) return 'กรุณากรอก Request For';
     if (!form.Area.trim()) return 'กรุณากรอก Area';
     if (!form.Start_Date) return 'กรุณาเลือก Start Date';
@@ -226,7 +230,7 @@ export default function CreatePage() {
     const foremans = wp.Foreman_Name?.split(', ') || [];
     const ctrs: SelectedContractor[] = names.map((name, i) => {
       const found = contractors.find(c => c.Contractor === name);
-      return { contractor: name, foremanName: foremans[i] || found?.Foreman_Name || '', foremanTel: tels[i] || found?.Foreman_Tel || '' };
+      return { contractor: name, workerName: foremans[i] || found?.Worker_Name || '', workerTel: tels[i] || found?.Worker_Tel || '', trainingStatus: found?.Training_status || '' };
     });
     setSelectedContractors(ctrs);
     const rawStart = wp.Start_Date?.split('T')[0] || '';
@@ -346,7 +350,7 @@ export default function CreatePage() {
                   <SelectContent>
                     {availableForemen.map(f => (
                       <SelectItem key={f.ID} value={String(f.ID)}>
-                        {f.Foreman_Name} ({f.Foreman_Tel})
+                        {f.Worker_Name} ({f.Worker_Tel}){f.Training_status === 'Expired' ? ' ⚠️ Expired' : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -362,12 +366,13 @@ export default function CreatePage() {
                   <div key={i} className="flex items-center justify-between bg-white rounded px-3 py-2 text-sm border">
                     <div>
                       <span className="font-medium">{c.contractor}</span>
-                      <span className="text-gray-500 ml-2">{c.foremanName} | {c.foremanTel}</span>
+                      <span className="text-gray-500 ml-2">{c.workerName} | {c.workerTel}</span>
+                      {c.trainingStatus === 'Expired' && <span className="ml-2 text-red-500 text-xs font-semibold">⚠️ Expired</span>}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeContractor(c.contractor, c.foremanName)}
+                      onClick={() => removeContractor(c.contractor, c.workerName)}
                       className="h-6 w-6 p-0 text-red-400 hover:text-red-600"
                     >
                       <X size={14} />
@@ -497,8 +502,8 @@ export default function CreatePage() {
                 </SelectTrigger>
                 <SelectContent>
                   {filteredPersonnel.map(p => (
-                    <SelectItem key={p.ID} value={`${p.Person_Name} ${p.Person_LastName}`}>
-                      {p.Person_Name} {p.Person_LastName}
+                    <SelectItem key={p.ID} value={p.Person_Name}>
+                      {p.Person_Name}
                     </SelectItem>
                   ))}
                 </SelectContent>

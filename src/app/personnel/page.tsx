@@ -14,10 +14,10 @@ interface Personnel {
   ID: number;
   Department: string;
   Person_Name: string;
-  Person_LastName: string;
+  Personnel_Tel: string | null;
 }
 
-const emptyForm = { Department: '', Person_Name: '', Person_LastName: '' };
+const emptyForm = { Department: '', Person_Name: '', Personnel_Tel: '' };
 
 export default function PersonnelPage() {
   const { toast } = useToast();
@@ -40,10 +40,16 @@ export default function PersonnelPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  useEffect(() => {
+    const handleAuthChange = () => { loadData(); };
+    window.addEventListener('auth-changed', handleAuthChange);
+    return () => window.removeEventListener('auth-changed', handleAuthChange);
+  }, [loadData]);
+
   const filtered = personnel.filter(p =>
     p.Department.toLowerCase().includes(searchQ.toLowerCase()) ||
     p.Person_Name.toLowerCase().includes(searchQ.toLowerCase()) ||
-    p.Person_LastName.toLowerCase().includes(searchQ.toLowerCase())
+    (p.Personnel_Tel || '').includes(searchQ)
   );
 
   const openAddForm = () => {
@@ -53,13 +59,13 @@ export default function PersonnelPage() {
   };
 
   const openEditForm = (p: Personnel) => {
-    setForm({ Department: p.Department, Person_Name: p.Person_Name, Person_LastName: p.Person_LastName });
+    setForm({ Department: p.Department, Person_Name: p.Person_Name, Personnel_Tel: p.Personnel_Tel || '' });
     setEditingId(p.ID);
     setFormOpen(true);
   };
 
   const handleSaveClick = () => {
-    if (!form.Department.trim() || !form.Person_Name.trim() || !form.Person_LastName.trim()) {
+    if (!form.Department.trim() || !form.Person_Name.trim()) {
       toast({ title: 'กรุณากรอกข้อมูลให้ครบถ้วน', variant: 'destructive' });
       return;
     }
@@ -70,7 +76,9 @@ export default function PersonnelPage() {
   const handleSaveConfirm = async () => {
     setCaptchaOpen(false);
     const method = editingId ? 'PUT' : 'POST';
-    const body = editingId ? { ...form, ID: editingId } : form;
+    const body = editingId
+      ? { ID: editingId, Department: form.Department, Person_Name: form.Person_Name, Personnel_Tel: form.Personnel_Tel || null }
+      : { Department: form.Department, Person_Name: form.Person_Name, Personnel_Tel: form.Personnel_Tel || null };
     const res = await fetch('/api/personnel', {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -151,8 +159,8 @@ export default function PersonnelPage() {
               <TableRow className="bg-gray-50 text-xs">
                 <TableHead>#</TableHead>
                 <TableHead>Department</TableHead>
-                <TableHead>ชื่อ</TableHead>
-                <TableHead>นามสกุล</TableHead>
+                <TableHead>ชื่อ-นามสกุล</TableHead>
+                <TableHead>เบอร์โทร</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -173,7 +181,7 @@ export default function PersonnelPage() {
                       </span>
                     </TableCell>
                     <TableCell className="font-medium">{p.Person_Name}</TableCell>
-                    <TableCell>{p.Person_LastName}</TableCell>
+                    <TableCell className="text-xs text-gray-600">{p.Personnel_Tel || '-'}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600" onClick={() => openEditForm(p)}>
@@ -210,24 +218,26 @@ export default function PersonnelPage() {
               <p className="text-xs text-gray-400 mt-1">ตัวอักษรสูงสุด 5 ตัว</p>
             </div>
             <div>
-              <Label className="text-sm">ชื่อ (Person Name) <span className="text-red-500">*</span></Label>
+              <Label className="text-sm">ชื่อ-นามสกุล <span className="text-red-500">*</span></Label>
               <Input
                 value={form.Person_Name}
                 onChange={e => setForm(f => ({ ...f, Person_Name: e.target.value }))}
-                maxLength={30}
-                placeholder="ชื่อ..."
+                maxLength={200}
+                placeholder="ชื่อ-นามสกุล..."
                 className="mt-1 text-sm"
               />
+              <p className="text-xs text-gray-400 mt-1">{form.Person_Name.length}/200</p>
             </div>
             <div>
-              <Label className="text-sm">นามสกุล (Person LastName) <span className="text-red-500">*</span></Label>
+              <Label className="text-sm">เบอร์โทร (Personnel Tel)</Label>
               <Input
-                value={form.Person_LastName}
-                onChange={e => setForm(f => ({ ...f, Person_LastName: e.target.value }))}
-                maxLength={30}
-                placeholder="นามสกุล..."
+                value={form.Personnel_Tel}
+                onChange={e => setForm(f => ({ ...f, Personnel_Tel: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                maxLength={10}
+                placeholder="0812345678"
                 className="mt-1 text-sm"
               />
+              <p className="text-xs text-gray-400 mt-1">ตัวเลขสูงสุด 10 หลัก (ไม่บังคับ)</p>
             </div>
           </div>
           <DialogFooter>

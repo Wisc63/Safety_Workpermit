@@ -42,7 +42,6 @@ interface Personnel {
   ID: number;
   Department: string;
   Person_Name: string;
-  Person_LastName: string;
 }
 
 function formatDateDisplay(dateStr: string): string {
@@ -422,8 +421,8 @@ export default function ManagePage() {
                     </SelectTrigger>
                     <SelectContent>
                       {shePersonnel.map(p => (
-                        <SelectItem key={p.ID} value={`${p.Person_Name} ${p.Person_LastName}`}>
-                          {p.Person_Name} {p.Person_LastName}
+                        <SelectItem key={p.ID} value={p.Person_Name}>
+                          {p.Person_Name}
                         </SelectItem>
                       ))}
                     </SelectContent>

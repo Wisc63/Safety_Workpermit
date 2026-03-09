@@ -13,12 +13,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 const SMPC = 'บริษัทสหมิตรถังแก๊ส จำกัด (มหาชน)';
 
-interface PersonnelItem { ID: number; Department: string; Person_Name: string; Person_LastName: string; }
-interface ContractorItem { ID: number; Contractor: string; }
+interface PersonnelItem { ID: number; Department: string; Person_Name: string; }
+interface ContractorItem { ID: number; Contractor: string; Worker_Name: string; Worker_Position: string; }
 interface WPItem { Work_Permit_No: string; Contractor: string; Foreman_Name: string; Contractor_Tel: string; }
-interface Employee { name: string; note: string; }
+interface Employee { name: string; position: string; note: string; }
 
-const makeEmps = (): Employee[] => Array.from({ length: 18 }, () => ({ name: '', note: '' }));
+const makeEmps = (): Employee[] => Array.from({ length: 18 }, () => ({ name: '', position: '', note: '' }));
 
 function FieldError({ show, msg }: { show: boolean; msg: string }) {
   if (!show) return null;
@@ -58,6 +58,7 @@ export default function WeekendPage() {
   const isSmpc = company === SMPC;
   const departments = [...new Set(personnel.map(p => p.Department).filter(Boolean))].sort() as string[];
   const filteredPersonnel = personnel.filter(p => p.Department === department);
+  const filteredContractorWorkers = contractors.filter(c => c.Contractor === company);
   const selectedNames = new Set(employees.filter(e => e.name).map(e => e.name));
 
   const isValid = !!(company && workDate && department && controller && jobDetail.trim() && area.trim());
@@ -90,6 +91,11 @@ export default function WeekendPage() {
   };
   const updateEmp = (i: number, field: keyof Employee, val: string) =>
     setEmployees(prev => prev.map((e, idx) => idx === i ? { ...e, [field]: val } : e));
+
+  const selectContractorWorker = (i: number, workerName: string) => {
+    const worker = filteredContractorWorkers.find(c => c.Worker_Name === workerName);
+    setEmployees(prev => prev.map((e, idx) => idx === i ? { ...e, name: workerName, position: worker?.Worker_Position || '' } : e));
+  };
 
   const handleClear = () => {
     setCompany(''); setWorkDate(''); setDepartment(''); setController('');
@@ -208,8 +214,8 @@ export default function WeekendPage() {
                 <SelectContent>
                   <SelectItem value="__none">— เลือกผู้ควบคุมงาน —</SelectItem>
                   {filteredPersonnel.map(p => (
-                    <SelectItem key={p.ID} value={`${p.Person_Name} ${p.Person_LastName}`}>
-                      {p.Person_Name} {p.Person_LastName}
+                    <SelectItem key={p.ID} value={p.Person_Name}>
+                      {p.Person_Name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -288,20 +294,19 @@ export default function WeekendPage() {
         </CardHeader>
         <CardContent className="pb-4">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs border-collapse table-fixed min-w-[520px]">
+            <table className="w-full text-xs border-collapse table-fixed min-w-[600px]">
               <thead>
                 <tr className="bg-[#1a3a5c] text-white">
-                  <th className="border border-[#1a3a5c] px-2 py-2 text-center w-[10%]">ลำดับ</th>
-                  <th className="border border-[#1a3a5c] px-3 py-2 text-left w-[35%]">ชื่อ - สกุล</th>
-                  <th className="border border-[#1a3a5c] px-2 py-2 text-center w-[55%]">หมายเหตุ</th>
+                  <th className="border border-[#1a3a5c] px-2 py-2 text-center w-[8%]">ลำดับ</th>
+                  <th className="border border-[#1a3a5c] px-3 py-2 text-left w-[32%]">ชื่อ - สกุล</th>
+                  <th className="border border-[#1a3a5c] px-2 py-2 text-left w-[20%]">ตำแหน่ง</th>
+                  <th className="border border-[#1a3a5c] px-2 py-2 text-center w-[40%]">หมายเหตุ</th>
                 </tr>
               </thead>
               <tbody>
                 {employees.map((emp, i) => {
-                  const rowAvailable = filteredPersonnel.filter(p => {
-                    const n = `${p.Person_Name} ${p.Person_LastName}`;
-                    return !selectedNames.has(n) || emp.name === n;
-                  });
+                  const rowAvailableSmpc = filteredPersonnel.filter(p => !selectedNames.has(p.Person_Name) || emp.name === p.Person_Name);
+                  const rowAvailableCtr = filteredContractorWorkers.filter(c => !selectedNames.has(c.Worker_Name) || emp.name === c.Worker_Name);
                   const rowEnabled = i === 0 || !!employees[i - 1].name;
                   return (
                     <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
@@ -309,14 +314,28 @@ export default function WeekendPage() {
                       <td className="border border-gray-200 px-1 py-0.5">
                         {isSmpc && department ? (
                           <Select value={emp.name || '__none'} onValueChange={v => updateEmp(i, 'name', v === '__none' ? '' : v)} disabled={!area.trim() || !rowEnabled}>
-                            <SelectTrigger className={`text-xs h-7 border-0 shadow-none focus:ring-0 bg-transparent ${!emp.name ? '[&>span:first-child]:flex-1 [&>span:first-child]:text-right' : ''}`}>
+                            <SelectTrigger className="text-xs h-7 border-0 shadow-none focus:ring-0 bg-transparent">
                               <SelectValue placeholder="เลือกชื่อ..." />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__none"></SelectItem>
-                              {rowAvailable.map(p => (
-                                <SelectItem key={p.ID} value={`${p.Person_Name} ${p.Person_LastName}`}>
-                                  {p.Person_Name} {p.Person_LastName}
+                              {rowAvailableSmpc.map(p => (
+                                <SelectItem key={p.ID} value={p.Person_Name}>
+                                  {p.Person_Name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : !isSmpc && company ? (
+                          <Select value={emp.name || '__none'} onValueChange={v => selectContractorWorker(i, v === '__none' ? '' : v)} disabled={!area.trim() || !rowEnabled}>
+                            <SelectTrigger className="text-xs h-7 border-0 shadow-none focus:ring-0 bg-transparent">
+                              <SelectValue placeholder="เลือกชื่อ..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none"></SelectItem>
+                              {rowAvailableCtr.map(c => (
+                                <SelectItem key={c.ID} value={c.Worker_Name}>
+                                  {c.Worker_Name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -327,6 +346,12 @@ export default function WeekendPage() {
                             placeholder={!area.trim() || !rowEnabled ? '' : 'ระบุชื่อ-สกุล...'}
                             disabled={!area.trim() || !rowEnabled} />
                         )}
+                      </td>
+                      <td className="border border-gray-200 px-1 py-0.5">
+                        <Input value={emp.position} onChange={e => updateEmp(i, 'position', e.target.value)}
+                          className="text-xs h-7 border-0 shadow-none bg-transparent focus-visible:ring-0 px-2"
+                          placeholder={!area.trim() || !rowEnabled ? '' : 'ตำแหน่ง...'}
+                          disabled={!area.trim() || !rowEnabled} />
                       </td>
                       <td className="border border-gray-200 px-1 py-0.5">
                         <Input value={emp.note} onChange={e => updateEmp(i, 'note', e.target.value)}

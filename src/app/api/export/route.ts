@@ -17,15 +17,19 @@ export async function GET(req: NextRequest) {
     let sheetName = 'Sheet1';
 
     if (table === 'personnel') {
-      result = await pool.request().query('SELECT Department, Person_Name, Person_LastName FROM dbo.Personnel ORDER BY Department, Person_Name');
+      result = await pool.request().query(
+        'SELECT Department, Person_Name, Personnel_Tel FROM dbo.Personnel ORDER BY Department, Person_Name'
+      );
       sheetName = 'Personnel';
     } else if (table === 'contractor') {
-      result = await pool.request().query('SELECT Contractor, Foreman_Name, Foreman_Tel FROM dbo.Contractor ORDER BY Contractor');
+      result = await pool.request().query(
+        'SELECT Contractor, Worker_Name, Worker_Tel, Worker_Position, CONVERT(NVARCHAR(10), Training_date, 103) AS Training_date, Training_status FROM dbo.Contractor ORDER BY Contractor, Worker_Name'
+      );
       sheetName = 'Contractor';
     } else {
       result = await pool.request().query(`
         SELECT Work_Permit_No, CONVERT(NVARCHAR, Created_Date, 103) AS Created_Date,
-               Contractor, Contractor_Tel, Request_For, Area,
+               Contractor, Contractor_Tel, Foreman_Name, Request_For, Area,
                CONVERT(NVARCHAR, Start_Date, 103) AS Start_Date,
                CONVERT(NVARCHAR, End_Date, 103) AS End_Date,
                Days, Workers, Department, Controller, Safety_Officer, Status, File_Path
@@ -36,7 +40,6 @@ export async function GET(req: NextRequest) {
     const ws = XLSX.utils.json_to_sheet(result.recordset);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
     return new NextResponse(buffer, {
