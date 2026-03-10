@@ -21,14 +21,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { Department, Person_Name, Personnel_Tel } = await req.json();
+  const { Department, Person_Name, Personnel_Tel, Personnel_Position } = await req.json();
   try {
     const pool = await getPool();
     await pool.request()
       .input('dept', sql.NVarChar(5), Department)
       .input('name', sql.NVarChar(200), Person_Name)
       .input('tel', sql.NVarChar(10), Personnel_Tel || null)
-      .query('INSERT INTO dbo.Personnel (Department, Person_Name, Personnel_Tel) VALUES (@dept, @name, @tel)');
+      .input('pos', sql.NVarChar(50), Personnel_Position || 'Unknown')
+      .query('INSERT INTO dbo.Personnel (Department, Person_Name, Personnel_Tel, Personnel_Position) VALUES (@dept, @name, @tel, @pos)');
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Database error';
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const { ID, Department, Person_Name, Personnel_Tel } = await req.json();
+  const { ID, Department, Person_Name, Personnel_Tel, Personnel_Position } = await req.json();
   try {
     const pool = await getPool();
     await pool.request()
@@ -45,7 +46,8 @@ export async function PUT(req: NextRequest) {
       .input('dept', sql.NVarChar(5), Department)
       .input('name', sql.NVarChar(200), Person_Name)
       .input('tel', sql.NVarChar(10), Personnel_Tel || null)
-      .query('UPDATE dbo.Personnel SET Department=@dept, Person_Name=@name, Personnel_Tel=@tel WHERE ID=@id');
+      .input('pos', sql.NVarChar(50), Personnel_Position || 'Unknown')
+      .query('UPDATE dbo.Personnel SET Department=@dept, Person_Name=@name, Personnel_Tel=@tel, Personnel_Position=@pos WHERE ID=@id');
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Database error';

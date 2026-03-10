@@ -58,7 +58,7 @@ function StatusChip({ status }: { status: string | null }) {
         <AlertTriangle size={12} /> Expired
       </span>
     );
-  return <span className="inline-flex items-center text-green-600 text-xs font-semibold">Allowed</span>;
+  return <span className="inline-flex items-center gap-1 text-green-600 text-xs font-semibold"><Check size={12} /> Allowed</span>;
 }
 
 export default function ContractorPage() {
@@ -83,7 +83,6 @@ export default function ContractorPage() {
   const [trainingContractor, setTrainingContractor] = useState('');
   const [allWorkersForCompany, setAllWorkersForCompany] = useState<Contractor[]>([]);
   const [trainingRows, setTrainingRows] = useState<TrainingRow[]>([{ workerId: null, workerName: '', position: '', lastTraining: null, currentStatus: '' }]);
-  const [trainingSearchTerms, setTrainingSearchTerms] = useState<string[]>(['']);
   const [trainingFilePath, setTrainingFilePath] = useState('');
   const [trainingFileName, setTrainingFileName] = useState('');
   const [trainingDate, setTrainingDate] = useState<Date | undefined>();
@@ -92,7 +91,7 @@ export default function ContractorPage() {
 
   const loadData = useCallback(async () => {
     const filters: string[] = [];
-    if (filterNormal) filters.push('Normal');
+    if (filterNormal) filters.push('Allowed');
     if (filterExpired) filters.push('Expired');
     const filterParam = filters.length < 2 ? `trainingFilter=${filters.join(',')}` : '';
     const [cRes, authRes] = await Promise.all([
@@ -105,6 +104,12 @@ export default function ContractorPage() {
   }, [filterNormal, filterExpired]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    const handleAuthChange = () => { loadData(); };
+    window.addEventListener('auth-changed', handleAuthChange);
+    return () => window.removeEventListener('auth-changed', handleAuthChange);
+  }, [loadData]);
 
   const filtered = contractors.filter(c =>
     c.Contractor.toLowerCase().includes(searchQ.toLowerCase()) ||
@@ -161,26 +166,22 @@ export default function ContractorPage() {
   const openTraining = () => {
     setTrainingContractor(''); setAllWorkersForCompany([]);
     setTrainingRows([{ workerId: null, workerName: '', position: '', lastTraining: null, currentStatus: '' }]);
-    setTrainingSearchTerms(['']); setTrainingFilePath(''); setTrainingFileName('');
+    setTrainingFilePath(''); setTrainingFileName('');
     setTrainingDate(undefined); setUploadDone(false); setTrainingOpen(true);
   };
 
   const handleTrainingContractorChange = async (company: string) => {
     setTrainingContractor(company);
     setTrainingRows([{ workerId: null, workerName: '', position: '', lastTraining: null, currentStatus: '' }]);
-    setTrainingSearchTerms(['']);
     if (!company) { setAllWorkersForCompany([]); return; }
     const res = await fetch(`/api/training?contractor=${encodeURIComponent(company)}`);
     const data = await res.json();
     setAllWorkersForCompany(Array.isArray(data) ? data : []);
   };
 
-  const getAvailableWorkersForRow = (rowIdx: number, searchTerm: string) => {
+  const getAvailableWorkersForRow = (rowIdx: number) => {
     const selectedIds = trainingRows.map((r, i) => i !== rowIdx ? r.workerId : null).filter(Boolean);
-    return allWorkersForCompany.filter(w =>
-      !selectedIds.includes(w.ID) &&
-      w.Worker_Name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return allWorkersForCompany.filter(w => !selectedIds.includes(w.ID));
   };
 
   const selectWorkerForRow = (rowIdx: number, workerId: number) => {
@@ -189,20 +190,15 @@ export default function ContractorPage() {
     const newRows = [...trainingRows];
     newRows[rowIdx] = { workerId: worker.ID, workerName: worker.Worker_Name, position: worker.Worker_Position, lastTraining: worker.Training_date, currentStatus: computeStatus(worker.Training_date) };
     setTrainingRows(newRows);
-    const newTerms = [...trainingSearchTerms];
-    newTerms[rowIdx] = worker.Worker_Name;
-    setTrainingSearchTerms(newTerms);
   };
 
   const addTrainingRow = () => {
     setTrainingRows(prev => [...prev, { workerId: null, workerName: '', position: '', lastTraining: null, currentStatus: '' }]);
-    setTrainingSearchTerms(prev => [...prev, '']);
   };
 
   const removeTrainingRow = (idx: number) => {
     if (trainingRows.length <= 1) return;
     setTrainingRows(prev => prev.filter((_, i) => i !== idx));
-    setTrainingSearchTerms(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,7 +287,7 @@ export default function ContractorPage() {
                 <span className="text-gray-500 font-medium">สถานะ:</span>
                 <label className="flex items-center gap-1 cursor-pointer">
                   <Checkbox checked={filterNormal} onCheckedChange={v => setFilterNormal(!!v)} />
-                  <span className="text-green-600">Normal</span>
+                  <span className="text-green-600">Allowed</span>
                 </label>
                 <label className="flex items-center gap-1 cursor-pointer">
                   <Checkbox checked={filterExpired} onCheckedChange={v => setFilterExpired(!!v)} />
@@ -439,37 +435,34 @@ export default function ContractorPage() {
                     </thead>
                     <tbody>
                       {trainingRows.map((row, idx) => {
-                        const available = getAvailableWorkersForRow(idx, trainingSearchTerms[idx]);
+                        const available = getAvailableWorkersForRow(idx);
                         return (
                           <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="px-2 py-1">
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={trainingSearchTerms[idx]}
-                                  onChange={e => {
-                                    const terms = [...trainingSearchTerms]; terms[idx] = e.target.value;
-                                    setTrainingSearchTerms(terms);
-                                    if (!e.target.value) {
-                                      const rows = [...trainingRows];
-                                      rows[idx] = { workerId: null, workerName: '', position: '', lastTraining: null, currentStatus: '' };
-                                      setTrainingRows(rows);
-                                    }
-                                  }}
-                                  placeholder="ค้นหาชื่อพนักงาน..."
-                                  className="w-full border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                />
-                                {trainingSearchTerms[idx] && !row.workerId && available.length > 0 && (
-                                  <div className="absolute z-10 top-full left-0 right-0 bg-white border rounded shadow-lg max-h-32 overflow-y-auto">
-                                    {available.map(w => (
-                                      <button key={w.ID} type="button" onClick={() => selectWorkerForRow(idx, w.ID)}
-                                        className="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-xs border-b last:border-b-0">
-                                        {w.Worker_Name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                              <Select
+                                value={row.workerId ? String(row.workerId) : ''}
+                                onValueChange={v => {
+                                  if (v === '__clear__') {
+                                    const rows = [...trainingRows];
+                                    rows[idx] = { workerId: null, workerName: '', position: '', lastTraining: null, currentStatus: '' };
+                                    setTrainingRows(rows);
+                                  } else {
+                                    selectWorkerForRow(idx, Number(v));
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="text-xs h-7 w-full">
+                                  <SelectValue placeholder="เลือกพนักงาน..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {row.workerId && (
+                                    <SelectItem value="__clear__">-- ล้างการเลือก --</SelectItem>
+                                  )}
+                                  {available.map(w => (
+                                    <SelectItem key={w.ID} value={String(w.ID)}>{w.Worker_Name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </td>
                             <td className="px-3 py-1 text-gray-600">{row.position || '-'}</td>
                             <td className="px-3 py-1 text-gray-600">{formatDateDisplay(row.lastTraining)}</td>
@@ -528,8 +521,8 @@ export default function ContractorPage() {
               </div>
               <div>
                 <Label className="text-sm font-medium">สถานะการฝึกอบรม (ใหม่)</Label>
-                <div className="mt-2 px-3 py-2 border rounded-md bg-white">
-                  {computedNewStatus ? <StatusChip status={computedNewStatus} /> : <span className="text-xs text-gray-400">-</span>}
+                <div className="mt-1 w-full h-9 px-3 flex items-center border rounded-md bg-white text-sm">
+                  {computedNewStatus ? <StatusChip status={computedNewStatus} /> : <span className="text-xs text-muted-foreground">-</span>}
                 </div>
               </div>
             </div>

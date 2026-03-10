@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     + '</div>'
     + '<hr class="divider">'
     + '<table class="info-table">'
-    + '<tr><td class="lbl">บริษัท :</td><td class="val" colspan="4">' + (company || '-') + '</td></tr>'
+    
     + '<tr><td class="lbl">วันที่เข้ามาปฏิบัติงาน :</td><td class="val" colspan="4">' + dateDisplay + '</td></tr>'
     + '<tr><td class="lbl">หน่วยงาน :</td><td class="val">' + (department || '-') + '</td>'
     + '<td></td>'

@@ -12,13 +12,20 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const SMPC = 'บริษัทสหมิตรถังแก๊ส จำกัด (มหาชน)';
+const CONTROLLER_POSITIONS = ['หัวหน้าแผนก/ส่วน', 'วิศวกร', 'ผู้บริหาร'];
 
-interface PersonnelItem { ID: number; Department: string; Person_Name: string; }
+interface PersonnelItem {
+  ID: number;
+  Department: string;
+  Person_Name: string;
+  Personnel_Tel: string | null;
+  Personnel_Position: string | null;
+}
 interface ContractorItem { ID: number; Contractor: string; Worker_Name: string; Worker_Position: string; }
 interface WPItem { Work_Permit_No: string; Contractor: string; Foreman_Name: string; Contractor_Tel: string; }
 interface Employee { name: string; position: string; note: string; }
 
-const makeEmps = (): Employee[] => Array.from({ length: 18 }, () => ({ name: '', position: '', note: '' }));
+const makeEmps = (): Employee[] => Array.from({ length: 15 }, () => ({ name: '', position: '', note: '' }));
 
 function FieldError({ show, msg }: { show: boolean; msg: string }) {
   if (!show) return null;
@@ -29,10 +36,10 @@ export default function WeekendPage() {
   const [personnel, setPersonnel] = useState<PersonnelItem[]>([]);
   const [contractors, setContractors] = useState<ContractorItem[]>([]);
   const [workPermits, setWorkPermits] = useState<WPItem[]>([]);
-  const [company, setCompany] = useState('');
   const [workDate, setWorkDate] = useState('');
   const [department, setDepartment] = useState('');
   const [controller, setController] = useState('');
+  const [controllerTel, setControllerTel] = useState('');
   const [jobDetail, setJobDetail] = useState('');
   const [area, setArea] = useState('');
   const [wpNo, setWpNo] = useState('');
@@ -55,30 +62,32 @@ export default function WeekendPage() {
     }).catch(() => {});
   }, []);
 
-  const isSmpc = company === SMPC;
   const departments = [...new Set(personnel.map(p => p.Department).filter(Boolean))].sort() as string[];
   const filteredPersonnel = personnel.filter(p => p.Department === department);
-  const filteredContractorWorkers = contractors.filter(c => c.Contractor === company);
+  const filteredControllers = filteredPersonnel.filter(p =>
+    p.Personnel_Position && CONTROLLER_POSITIONS.includes(p.Personnel_Position)
+  );
+  const filteredContractorWorkers = contractors.filter(c =>
+    c.Contractor.trim().toLowerCase() === ctrCompany.trim().toLowerCase()
+  );
   const selectedNames = new Set(employees.filter(e => e.name).map(e => e.name));
 
-  const isValid = !!(company && workDate && department && controller && jobDetail.trim() && area.trim());
+  const isValid = !!(workDate && department && controller && jobDetail.trim() && area.trim());
 
-  const handleCompanyChange = (val: string) => {
-    setCompany(val === '__none' ? '' : val);
-    setWorkDate(''); setDepartment(''); setController('');
-    setJobDetail(''); setArea(''); setEmployees(makeEmps());
-  };
   const handleWorkDateChange = (d: Date | undefined) => {
     setWorkDate(d ? format(d, 'yyyy-MM-dd') : '');
-    setDepartment(''); setController('');
+    setDepartment(''); setController(''); setControllerTel('');
     setJobDetail(''); setArea(''); setEmployees(makeEmps());
   };
   const handleDeptChange = (val: string) => {
     setDepartment(val === '__none' ? '' : val);
-    setController(''); setJobDetail(''); setArea(''); setEmployees(makeEmps());
+    setController(''); setControllerTel(''); setJobDetail(''); setArea(''); setEmployees(makeEmps());
   };
   const handleControllerChange = (val: string) => {
-    setController(val === '__none' ? '' : val);
+    const name = val === '__none' ? '' : val;
+    setController(name);
+    const person = personnel.find(p => p.Person_Name === name);
+    setControllerTel(person?.Personnel_Tel || '');
     setJobDetail(''); setArea(''); setEmployees(makeEmps());
   };
   const handleWPChange = (val: string) => {
@@ -88,17 +97,26 @@ export default function WeekendPage() {
     setCtrCompany(wp?.Contractor?.split(', ')[0] || '');
     setForemanName(wp?.Foreman_Name?.split(', ')[0] || '');
     setCtrTel(wp?.Contractor_Tel?.split(', ')[0] || '');
+    setEmployees(makeEmps());
   };
   const updateEmp = (i: number, field: keyof Employee, val: string) =>
     setEmployees(prev => prev.map((e, idx) => idx === i ? { ...e, [field]: val } : e));
 
-  const selectContractorWorker = (i: number, workerName: string) => {
+  const selectPersonnelForRow = (i: number, name: string) => {
+    const person = filteredPersonnel.find(p => p.Person_Name === name);
+    setEmployees(prev => prev.map((e, idx) => idx === i
+      ? { ...e, name: name, position: person?.Personnel_Position || '' }
+      : e));
+  };
+  const selectContractorForRow = (i: number, workerName: string) => {
     const worker = filteredContractorWorkers.find(c => c.Worker_Name === workerName);
-    setEmployees(prev => prev.map((e, idx) => idx === i ? { ...e, name: workerName, position: worker?.Worker_Position || '' } : e));
+    setEmployees(prev => prev.map((e, idx) => idx === i
+      ? { ...e, name: workerName, position: worker?.Worker_Position || '' }
+      : e));
   };
 
   const handleClear = () => {
-    setCompany(''); setWorkDate(''); setDepartment(''); setController('');
+    setWorkDate(''); setDepartment(''); setController(''); setControllerTel('');
     setJobDetail(''); setArea(''); setWpNo('');
     setCtrCompany(''); setForemanName(''); setCtrTel('');
     setEmployees(makeEmps());
@@ -110,8 +128,10 @@ export default function WeekendPage() {
     if (!isValid) return;
     setPrinting(true);
     try {
-      const body = { company, workDate, department, controller, jobDetail, area,
-        workPermitNo: wpNo, contractorCompany: ctrCompany, foremanName, contractorTel: ctrTel, employees };
+      const body = {
+        company: SMPC, workDate, department, controller, jobDetail, area,
+        workPermitNo: wpNo, contractorCompany: ctrCompany, foremanName, contractorTel: ctrTel, employees,
+      };
       const res = await fetch('/api/weekend-print', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const html = await res.text();
       const win = window.open('', '_blank');
@@ -153,26 +173,11 @@ export default function WeekendPage() {
         <CardContent className="space-y-3 pb-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold">บริษัท <span className="text-red-500">*</span></Label>
-              <Select value={company || '__none'} onValueChange={handleCompanyChange}>
-                <SelectTrigger className={`text-xs h-8 ${showErrors && !company ? 'border-red-400' : ''}`}>
-                  <SelectValue placeholder="เลือกบริษัท..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none">— เลือกบริษัท —</SelectItem>
-                  <SelectItem value={SMPC}>{SMPC}</SelectItem>
-                  {[...new Set(contractors.map(c => c.Contractor))].map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <FieldError show={showErrors && !company} msg="กรุณาเลือกบริษัท" />
-            </div>
-            <div className="space-y-1">
               <Label className="text-xs font-semibold">วันที่เข้ามาปฏิบัติงาน <span className="text-red-500">*</span></Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    disabled={!company}
                     className={`w-full justify-start text-xs h-8 font-normal ${showErrors && !workDate ? 'border-red-400' : ''} ${!workDate ? 'text-muted-foreground' : ''}`}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
@@ -190,8 +195,6 @@ export default function WeekendPage() {
               </Popover>
               <FieldError show={showErrors && !workDate} msg="กรุณาเลือกวันที่" />
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold">หน่วยงาน <span className="text-red-500">*</span></Label>
               <Select value={department || '__none'} onValueChange={handleDeptChange} disabled={!workDate}>
@@ -205,6 +208,8 @@ export default function WeekendPage() {
               </Select>
               <FieldError show={showErrors && !department} msg="กรุณาเลือกหน่วยงาน" />
             </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold">ชื่อ ผู้ควบคุมงาน <span className="text-red-500">*</span></Label>
               <Select value={controller || '__none'} onValueChange={handleControllerChange} disabled={!department}>
@@ -213,14 +218,23 @@ export default function WeekendPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none">— เลือกผู้ควบคุมงาน —</SelectItem>
-                  {filteredPersonnel.map(p => (
+                  {filteredControllers.map(p => (
                     <SelectItem key={p.ID} value={p.Person_Name}>
-                      {p.Person_Name}
+                      {p.Person_Name} <span className="text-gray-400">({p.Personnel_Position})</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <FieldError show={showErrors && !controller} msg="กรุณาเลือกผู้ควบคุมงาน" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">หมายเลขโทรศัพท์ผู้ควบคุมงาน</Label>
+              <Input
+                value={controllerTel}
+                readOnly
+                className="text-xs h-8 bg-gray-50 font-mono"
+                placeholder="-"
+              />
             </div>
           </div>
           <div className="space-y-1">
@@ -288,8 +302,10 @@ export default function WeekendPage() {
         <CardHeader className="pb-2 pt-4">
           <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             รายชื่อผู้เข้าทำงาน
-            {isSmpc && department && <span className="text-xs font-normal text-blue-500 bg-blue-50 px-2 py-0.5 rounded">เลือกจากหน่วยงาน {department}</span>}
-            {!isSmpc && company && <span className="text-xs font-normal text-orange-500 bg-orange-50 px-2 py-0.5 rounded">กรอกชื่อ-สกุลผู้รับเหมา</span>}
+            {wpNo && ctrCompany
+              ? <span className="text-xs font-normal text-orange-500 bg-orange-50 px-2 py-0.5 rounded">ผู้รับเหมา: {ctrCompany}</span>
+              : department && <span className="text-xs font-normal text-blue-500 bg-blue-50 px-2 py-0.5 rounded">หน่วยงาน {department}</span>
+            }
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-4">
@@ -305,38 +321,35 @@ export default function WeekendPage() {
               </thead>
               <tbody>
                 {employees.map((emp, i) => {
-                  const rowAvailableSmpc = filteredPersonnel.filter(p => !selectedNames.has(p.Person_Name) || emp.name === p.Person_Name);
-                  const rowAvailableCtr = filteredContractorWorkers.filter(c => !selectedNames.has(c.Worker_Name) || emp.name === c.Worker_Name);
+                  const rowAvailablePersonnel = filteredPersonnel.filter(p => !selectedNames.has(p.Person_Name) || emp.name === p.Person_Name);
+                  const rowAvailableContractor = filteredContractorWorkers.filter(c => !selectedNames.has(c.Worker_Name) || emp.name === c.Worker_Name);
                   const rowEnabled = i === 0 || !!employees[i - 1].name;
+                  const useContractor = !!(wpNo && ctrCompany);
                   return (
                     <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="border border-gray-200 px-2 py-1 text-center text-gray-400">{i + 1}</td>
                       <td className="border border-gray-200 px-1 py-0.5">
-                        {isSmpc && department ? (
-                          <Select value={emp.name || '__none'} onValueChange={v => updateEmp(i, 'name', v === '__none' ? '' : v)} disabled={!area.trim() || !rowEnabled}>
+                        {useContractor ? (
+                          <Select value={emp.name || '__none'} onValueChange={v => selectContractorForRow(i, v === '__none' ? '' : v)} disabled={!area.trim() || !rowEnabled}>
                             <SelectTrigger className="text-xs h-7 border-0 shadow-none focus:ring-0 bg-transparent">
                               <SelectValue placeholder="เลือกชื่อ..." />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__none"></SelectItem>
-                              {rowAvailableSmpc.map(p => (
-                                <SelectItem key={p.ID} value={p.Person_Name}>
-                                  {p.Person_Name}
-                                </SelectItem>
+                              {rowAvailableContractor.map(c => (
+                                <SelectItem key={c.ID} value={c.Worker_Name}>{c.Worker_Name}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                        ) : !isSmpc && company ? (
-                          <Select value={emp.name || '__none'} onValueChange={v => selectContractorWorker(i, v === '__none' ? '' : v)} disabled={!area.trim() || !rowEnabled}>
+                        ) : department ? (
+                          <Select value={emp.name || '__none'} onValueChange={v => selectPersonnelForRow(i, v === '__none' ? '' : v)} disabled={!area.trim() || !rowEnabled}>
                             <SelectTrigger className="text-xs h-7 border-0 shadow-none focus:ring-0 bg-transparent">
                               <SelectValue placeholder="เลือกชื่อ..." />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__none"></SelectItem>
-                              {rowAvailableCtr.map(c => (
-                                <SelectItem key={c.ID} value={c.Worker_Name}>
-                                  {c.Worker_Name}
-                                </SelectItem>
+                              {rowAvailablePersonnel.map(p => (
+                                <SelectItem key={p.ID} value={p.Person_Name}>{p.Person_Name}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -349,7 +362,7 @@ export default function WeekendPage() {
                       </td>
                       <td className="border border-gray-200 px-1 py-0.5">
                         <Input value={emp.position} onChange={e => updateEmp(i, 'position', e.target.value)}
-                          className="text-xs h-7 border-0 shadow-none bg-transparent focus-visible:ring-0 px-2"
+                          className="!text-xs h-7 border-0 shadow-none bg-transparent focus-visible:ring-0 px-2"
                           placeholder={!area.trim() || !rowEnabled ? '' : 'ตำแหน่ง...'}
                           disabled={!area.trim() || !rowEnabled} />
                       </td>

@@ -146,3 +146,13 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'dbo.Personnel') AND name = N'Personnel_Tel')
     ALTER TABLE dbo.Personnel ADD Personnel_Tel NVARCHAR(10) NULL;
 GO
+
+-- 12. Add Personnel_Position if missing
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'dbo.Personnel') AND name = N'Personnel_Position')
+    ALTER TABLE dbo.Personnel ADD Personnel_Position NVARCHAR(50) NULL;
+GO
+
+-- 13. Set default 'Unknown' for existing rows with NULL Personnel_Position
+UPDATE dbo.Personnel SET Personnel_Position = N'Unknown'
+WHERE Personnel_Position IS NULL;
+GO

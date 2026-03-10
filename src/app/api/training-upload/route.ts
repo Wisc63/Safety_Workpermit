@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing file or fileName' }, { status: 400 });
     }
 
-    const uncPath = '\\192.168.42.41\public\SHE\Work Permit\Training Record';
-    try { fs.mkdirSync(uncPath, { recursive: true }); } catch { /* may already exist */ }
+    const uncPath = '\\\\192.168.42.41\\Public\\SHE\\Work Permit\\Training Record';
+    fs.mkdirSync(uncPath, { recursive: true });
 
     const safeFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
     const filePath = path.join(uncPath, safeFileName);

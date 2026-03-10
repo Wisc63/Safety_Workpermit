@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CaptchaDialog from '@/components/CaptchaDialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,9 +16,11 @@ interface Personnel {
   Department: string;
   Person_Name: string;
   Personnel_Tel: string | null;
+  Personnel_Position: string | null;
 }
 
-const emptyForm = { Department: '', Person_Name: '', Personnel_Tel: '' };
+const PERSONNEL_POSITIONS = ['พนักงาน', 'หัวหน้าแผนก/ส่วน', 'วิศวกร', 'ผู้บริหาร'];
+const emptyForm = { Department: '', Person_Name: '', Personnel_Tel: '', Personnel_Position: 'พนักงาน' };
 
 export default function PersonnelPage() {
   const { toast } = useToast();
@@ -59,7 +62,12 @@ export default function PersonnelPage() {
   };
 
   const openEditForm = (p: Personnel) => {
-    setForm({ Department: p.Department, Person_Name: p.Person_Name, Personnel_Tel: p.Personnel_Tel || '' });
+    setForm({
+      Department: p.Department,
+      Person_Name: p.Person_Name,
+      Personnel_Tel: p.Personnel_Tel || '',
+      Personnel_Position: p.Personnel_Position || 'พนักงาน',
+    });
     setEditingId(p.ID);
     setFormOpen(true);
   };
@@ -77,8 +85,8 @@ export default function PersonnelPage() {
     setCaptchaOpen(false);
     const method = editingId ? 'PUT' : 'POST';
     const body = editingId
-      ? { ID: editingId, Department: form.Department, Person_Name: form.Person_Name, Personnel_Tel: form.Personnel_Tel || null }
-      : { Department: form.Department, Person_Name: form.Person_Name, Personnel_Tel: form.Personnel_Tel || null };
+      ? { ID: editingId, Department: form.Department, Person_Name: form.Person_Name, Personnel_Tel: form.Personnel_Tel || null, Personnel_Position: form.Personnel_Position }
+      : { Department: form.Department, Person_Name: form.Person_Name, Personnel_Tel: form.Personnel_Tel || null, Personnel_Position: form.Personnel_Position };
     const res = await fetch('/api/personnel', {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -160,6 +168,7 @@ export default function PersonnelPage() {
                 <TableHead>#</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>ชื่อ-นามสกุล</TableHead>
+                <TableHead>ตำแหน่งงาน</TableHead>
                 <TableHead>เบอร์โทร</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -167,7 +176,7 @@ export default function PersonnelPage() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-400 py-8 text-sm">
+                  <TableCell colSpan={6} className="text-center text-gray-400 py-8 text-sm">
                     ยังไม่มีข้อมูลบุคลากร
                   </TableCell>
                 </TableRow>
@@ -181,6 +190,7 @@ export default function PersonnelPage() {
                       </span>
                     </TableCell>
                     <TableCell className="font-medium">{p.Person_Name}</TableCell>
+                    <TableCell className="text-xs text-gray-700">{p.Personnel_Position || '-'}</TableCell>
                     <TableCell className="text-xs text-gray-600">{p.Personnel_Tel || '-'}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -227,6 +237,15 @@ export default function PersonnelPage() {
                 className="mt-1 text-sm"
               />
               <p className="text-xs text-gray-400 mt-1">{form.Person_Name.length}/200</p>
+            </div>
+            <div>
+              <Label className="text-sm">ตำแหน่งงาน <span className="text-red-500">*</span></Label>
+              <Select value={form.Personnel_Position} onValueChange={v => setForm(f => ({ ...f, Personnel_Position: v }))}>
+                <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERSONNEL_POSITIONS.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-sm">เบอร์โทร (Personnel Tel)</Label>

@@ -30,6 +30,7 @@ interface Personnel {
   ID: number;
   Department: string;
   Person_Name: string;
+  Personnel_Position: string | null;
 }
 
 interface WorkPermit {
@@ -79,6 +80,8 @@ function toISODate(date: Date | undefined): string {
   return format(date, 'yyyy-MM-dd');
 }
 
+const CONTROLLER_POSITIONS = ['หัวหน้าแผนก/ส่วน', 'วิศวกร', 'ผู้บริหาร'];
+
 const emptyForm = {
   Request_For: '',
   Area: '',
@@ -97,6 +100,7 @@ export default function CreatePage() {
   const [workPermits, setWorkPermits] = useState<WorkPermit[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
   const [filteredPersonnel, setFilteredPersonnel] = useState<Personnel[]>([]);
+  const filteredControllers = filteredPersonnel.filter(p => p.Personnel_Position && CONTROLLER_POSITIONS.includes(p.Personnel_Position));
   const [selectedContractors, setSelectedContractors] = useState<SelectedContractor[]>([]);
   const [selectedContractorCompany, setSelectedContractorCompany] = useState<string>('');
   const [selectedForemanId, setSelectedForemanId] = useState<string>('');
@@ -501,7 +505,7 @@ export default function CreatePage() {
                   <SelectValue placeholder="เลือก Controller..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredPersonnel.map(p => (
+                  {filteredControllers.map(p => (
                     <SelectItem key={p.ID} value={p.Person_Name}>
                       {p.Person_Name}
                     </SelectItem>
