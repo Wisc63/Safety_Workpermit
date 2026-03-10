@@ -129,7 +129,7 @@ export default function WeekendPage() {
     setPrinting(true);
     try {
       const body = {
-        company: SMPC, workDate, department, controller, jobDetail, area,
+        company: SMPC, workDate, department, controller, controllerTel, jobDetail, area,
         workPermitNo: wpNo, contractorCompany: ctrCompany, foremanName, contractorTel: ctrTel, employees,
       };
       const res = await fetch('/api/weekend-print', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

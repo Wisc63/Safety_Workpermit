@@ -5,7 +5,7 @@ import { th } from 'date-fns/locale';
 interface Employee { name: string; position: string; note: string; }
 
 export async function POST(req: NextRequest) {
-  const { company, workDate, department, controller, jobDetail, area,
+  const { company, workDate, department, controller, controllerTel, jobDetail, area,
     workPermitNo, contractorCompany, foremanName, contractorTel, employees } = await req.json();
 
   let dateDisplay = '-';
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     + '<tr><td class="lbl">วันที่เข้ามาปฏิบัติงาน :</td><td class="val" colspan="4">' + dateDisplay + '</td></tr>'
     + '<tr><td class="lbl">หน่วยงาน :</td><td class="val">' + (department || '-') + '</td>'
     + '<td></td>'
-    + '<td class="lbl">ชื่อ ผู้ควบคุมงาน :</td><td class="val">' + (controller || '-') + '</td></tr>'
+    + '<td class="lbl">ชื่อ ผู้ควบคุมงาน :</td><td class="val">' + (controller || '-') + (controllerTel ? ' (' + controllerTel + ')' : '') + '</td></tr>'
     + '<tr><td class="lbl">งานที่เข้าทำ :</td><td class="val" colspan="4">' + (jobDetail || '-') + '</td></tr>'
     + '<tr><td class="lbl">พื้นที่ปฎิบัติงาน :</td><td class="val" colspan="4">' + (area || '-') + '</td></tr>'
     + wpSection
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     + '<p>อนุมัติโดย</p>'
     + '<p>&nbsp;</p>'
     + '<div class="sig-line"></div>'
-    + '<p>ผู้อำนวยการ</p>'
+    + '<p>' + (workPermitNo ? 'ผู้ควบคุมงาน (SMPC)' : 'ผู้อำนวยการ') + '</p>'
     + '</div>'
     + '</div>'
     + '<script>window.onload = function() { window.print(); };</script>'

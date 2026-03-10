@@ -6,8 +6,8 @@ import { useState, useEffect } from 'react';
 import { ShieldCheck, FileText, Users, Building2, Calendar, LogOut, LogIn, User } from 'lucide-react';
 import LoginModal from './LoginModal';
 
-const APP_VERSION = 'Rev.1';
-const APP_DATE    = '06/03/2026';
+const APP_VERSION = 'Rev.2';
+const APP_DATE    = '09/03/2026';
 const APP_AUTHOR  = 'Wis';
 const APP_COPYRIGHT = 'SMPC';
 
@@ -43,18 +43,35 @@ export default function Navbar() {
     broadcastAuth(false);
   };
 
+  const navLinks = (showLabel: boolean) => NAV_ITEMS.map(({ href, label, icon }) => {
+    const active = pathname === href;
+    return (
+      <Link
+        key={href}
+        href={href}
+        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
+          active ? 'bg-[#1a3a5c] text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
+      >
+        {icon}
+        {showLabel && <span>{label}</span>}
+      </Link>
+    );
+  });
+
   return (
     <>
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-        <div className="max-w-screen-2xl mx-auto px-4 flex items-center h-14 gap-3">
+
+        {/* Row 1: Logo + Nav (desktop) + Auth */}
+        <div className="max-w-screen-2xl mx-auto px-4 flex items-center h-16 gap-3">
 
           {/* SMPC Logo */}
           <div className="hidden sm:flex items-center pr-3 border-r border-gray-200 flex-shrink-0">
             <Image
               src="/SMPC_logo_NOBG.png"
               alt="SMPC Logo"
-              height={30}
-              width={80}
+              height={35}
+              width={90}
               className="object-contain"
               priority
             />
@@ -63,31 +80,19 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
             <div className="flex items-center justify-center w-9 h-9 bg-[#1a3a5c] rounded-lg flex-shrink-0">
-              <ShieldCheck size={19} className="text-yellow-400" />
+              <ShieldCheck size={23} className="text-white" />
             </div>
             <div className="hidden sm:block leading-tight">
-              <p className="text-sm font-bold text-gray-800 whitespace-nowrap">สหมิตรถังแก๊ส จำกัด (มหาชน) | SHE</p>
+              <p className="text-base font-bold text-gray-800 whitespace-nowrap">สหมิตรถังแก๊ส จำกัด (มหาชน) | SHE</p>
+              <p className="text-[12px] text-gray-800 tracking-wider whitespace-nowrap">{APP_VERSION} , {APP_DATE} , Dev by {APP_AUTHOR} , © {APP_COPYRIGHT}</p>
             </div>
           </div>
 
           <div className="flex-1" />
 
-          {/* Navigation */}
-          <nav className="flex items-center gap-0.5">
-            {NAV_ITEMS.map(({ href, label, icon }) => {
-              const active = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
-                    active ? 'bg-[#1a3a5c] text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
-                >
-                  {icon}
-                  <span className="hidden md:inline">{label}</span>
-                </Link>
-              );
-            })}
+          {/* Navigation - desktop only (lg+) */}
+          <nav className="hidden lg:flex items-center gap-0.5">
+            {navLinks(true)}
           </nav>
 
           {/* Divider */}
@@ -127,16 +132,18 @@ export default function Navbar() {
           </div>
 
         </div>
-      </header>
 
-      {/* Credit sub-bar */}
-      <div className="bg-gray-50 border-b border-gray-100">
-        <div className="max-w-screen-2xl mx-auto px-4 flex justify-end py-0.5">
-          <span className="text-[12px] text-gray-400 tracking-wider">
-            {APP_VERSION}&nbsp;,&nbsp;{APP_DATE}&nbsp;,&nbsp;Dev by {APP_AUTHOR}&nbsp;,&nbsp;&copy;{APP_COPYRIGHT}
-          </span>
+        {/* Row 2: Nav (tablet/iPad only, below lg) */}
+        <div className="lg:hidden bg-gray-50 border-b border-gray-100">
+          <div className="max-w-screen-2xl mx-auto px-4 flex items-center py-0.5">
+            <nav className="flex items-center gap-0.5">
+              {navLinks(true)}
+            </nav>
+          </div>
         </div>
-      </div>
+
+
+      </header>
 
       {/* Login Modal */}
       {showModal && (

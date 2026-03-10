@@ -64,7 +64,11 @@ export async function GET(req: NextRequest) {
   .signature-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 30px; }
   .sig-box { text-align: center; }
   .sig-line { border-top: 1px solid #000; margin-top: 50px; padding-top: 5px; font-size: 10pt; }
-  .footer { text-align: center; font-size: 9pt; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+  .doc-footer { position: fixed; bottom: 0; left: 0; right: 0; font-size: 8.5pt; color: #555; }
+  .doc-footer-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 3px; }
+  .doc-footer-line { border: none; border-top: 1px solid #000; margin: 0; }
+  .doc-footer-page { text-align: center; padding-top: 3px; font-size: 8.5pt; color: #555; }
+  .print-info { text-align: center; font-size: 8pt; color: #bbb; margin-top: 20px; padding-top: 6px; border-top: 1px solid #eee; }
   .badge-row { display: flex; align-items: center; gap: 10px; }
 </style>
 </head>
@@ -163,10 +167,18 @@ export async function GET(req: NextRequest) {
 </div>
 
 
-<div class="footer">
+<div class="print-info">
   พิมพ์เมื่อ: ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} |
   Work Permit No: ${wp.Work_Permit_No} |
   ระบบ Work Permit - หน่วยงานความปลอดภัย (SHE)
+</div>
+<div class="doc-footer">
+  <div class="doc-footer-row">
+    <span>REV : 6/1 (14/10/2025)</span>
+    <span>SHE-F-113</span>
+  </div>
+  <hr class="doc-footer-line">
+  <div class="doc-footer-page">Page 1 of 3</div>
 </div>
 
 <script>window.onload = function(){ window.print(); }</script>
