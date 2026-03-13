@@ -63,7 +63,7 @@ export default function Navbar() {
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
 
         {/* Row 1: Logo + Nav (desktop) + Auth */}
-        <div className="max-w-screen-2xl mx-auto px-4 flex items-center h-16 gap-3">
+        <div className="max-w-screen-2xl mx-auto px-4 flex items-center h-14 gap-3">
 
           {/* SMPC Logo */}
           <div className="hidden sm:flex items-center pr-3 border-r border-gray-200 flex-shrink-0">
@@ -84,7 +84,7 @@ export default function Navbar() {
             </div>
             <div className="hidden sm:block leading-tight">
               <p className="text-base font-bold text-gray-800 whitespace-nowrap">สหมิตรถังแก๊ส จำกัด (มหาชน) | SHE</p>
-              <p className="text-[12px] text-gray-800 tracking-wider whitespace-nowrap">{APP_VERSION} , {APP_DATE} , Dev by {APP_AUTHOR} , © {APP_COPYRIGHT}</p>
+              <p className="text-[11px] text-gray-800 tracking-wider whitespace-nowrap">{APP_VERSION} , {APP_DATE} , Dev by {APP_AUTHOR} , © {APP_COPYRIGHT}</p>
             </div>
           </div>
 
