@@ -294,8 +294,8 @@ export default function CreatePage() {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-[#1a3a5c]">
-          {editingWP ? `แก้ไข Work Permit: ${editingWP.Work_Permit_No}` : 'สร้าง Work Permit ใหม่'}
+        <h1 className="text-[22px] font-bold text-[#1a3a5c]">
+          {editingWP ? `แก้ไข Work Permit: ${editingWP.Work_Permit_No}` : 'CREATE NEW WORK PERMIT REQUEST'}
         </h1>
         {isAdmin && (
           <Button variant="outline" size="sm" onClick={() => window.open('/api/export?table=workpermit', '_blank')} className="gap-1">

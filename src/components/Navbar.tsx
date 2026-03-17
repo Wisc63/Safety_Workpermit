@@ -49,7 +49,7 @@ export default function Navbar() {
       <Link
         key={href}
         href={href}
-        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
+        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[15px] font-medium transition-colors duration-150 ${
           active ? 'bg-[#1a3a5c] text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
       >
         {icon}
@@ -83,7 +83,7 @@ export default function Navbar() {
               <ShieldCheck size={23} className="text-white" />
             </div>
             <div className="hidden sm:block leading-tight">
-              <p className="text-base font-bold text-gray-800 whitespace-nowrap">สหมิตรถังแก๊ส จำกัด (มหาชน) | SHE</p>
+              <p className="text-[18px] font-bold text-gray-800 whitespace-nowrap">สหมิตรถังแก๊ส จำกัด (มหาชน)</p>
               <p className="text-[11px] text-gray-800 tracking-wider whitespace-nowrap">{APP_VERSION} , {APP_DATE} , Dev by {APP_AUTHOR} , © {APP_COPYRIGHT}</p>
             </div>
           </div>
