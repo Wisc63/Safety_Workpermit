@@ -1,7 +1,7 @@
 import sql from 'mssql';
 
 const config: sql.config = {
-  server: '192.168.45.6',
+  server: '192.168.42.103',
   database: 'Safety_Workpermit',
   user: 'ee',
   password: '12345',
