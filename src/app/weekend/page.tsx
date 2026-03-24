@@ -82,19 +82,13 @@ export default function WeekendPage() {
 
   const [history, setHistory] = useState<WeekendRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [searchWorkDate, setSearchWorkDate] = useState('');
-  const [searchDept, setSearchDept] = useState('');
-  const [searchController, setSearchController] = useState('');
-  const [searchWpNo, setSearchWpNo] = useState('');
+  const [searchQ, setSearchQ] = useState('');
 
-  const loadHistory = useCallback(async (wd = '', dp = '', ct = '', wp = '') => {
+  const loadHistory = useCallback(async (q = '') => {
     setHistoryLoading(true);
     try {
       const params = new URLSearchParams();
-      if (wd) params.set('work_date', wd);
-      if (dp) params.set('department', dp);
-      if (ct) params.set('controller', ct);
-      if (wp) params.set('wp_no', wp);
+      if (q) params.set('q', q);
       const res = await fetch('/api/weekend-request?' + params.toString());
       const data = await res.json();
       setHistory(Array.isArray(data) ? data : []);
@@ -263,9 +257,9 @@ export default function WeekendPage() {
     } finally { setPrinting(false); }
   };
 
-  const handleSearch = () => loadHistory(searchWorkDate, searchDept, searchController, searchWpNo);
+  const handleSearch = () => loadHistory(searchQ);
   const handleClearSearch = () => {
-    setSearchWorkDate(''); setSearchDept(''); setSearchController(''); setSearchWpNo('');
+    setSearchQ('');
     loadHistory();
   };
 
@@ -525,39 +519,20 @@ export default function WeekendPage() {
           <CardTitle className="text-sm font-semibold text-gray-700">ประวัติการบันทึกข้อมูล</CardTitle>
         </CardHeader>
         <CardContent className="pb-4 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            <div className="space-y-1">
-              <Label className="text-xs text-gray-500">วันที่เข้าทำงาน</Label>
-              <Input value={searchWorkDate} onChange={e => setSearchWorkDate(e.target.value)}
-                placeholder="เช่น 2026-03" className="text-xs h-8"
-                onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-gray-500">หน่วยงาน</Label>
-              <Input value={searchDept} onChange={e => setSearchDept(e.target.value)}
-                placeholder="ค้นหาหน่วยงาน..." className="text-xs h-8"
-                onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-gray-500">ชื่อผู้ควบคุมงาน</Label>
-              <Input value={searchController} onChange={e => setSearchController(e.target.value)}
-                placeholder="ค้นหาผู้ควบคุมงาน..." className="text-xs h-8"
-                onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-gray-500">Work Permit No.</Label>
-              <Input value={searchWpNo} onChange={e => setSearchWpNo(e.target.value)}
-                placeholder="เช่น W2026-..." className="text-xs h-8"
-                onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" className="text-xs h-8 gap-1 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white" onClick={handleSearch} disabled={historyLoading}>
-              <Search size={12} /> ค้นหา
-            </Button>
-            <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={handleClearSearch} disabled={historyLoading}>
-              <X size={12} /> ล้างการค้นหา
-            </Button>
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="ค้นหา วันที่, หน่วยงาน, ผู้ควบคุมงาน, พื้นที่, งาน, WP No...."
+              value={searchQ}
+              onChange={e => { setSearchQ(e.target.value); loadHistory(e.target.value); }}
+              onKeyDown={e => e.key === 'Escape' && handleClearSearch()}
+              className="pl-8 !text-xs"
+            />
+            {searchQ && (
+              <button onClick={handleClearSearch} className="absolute right-2 top-2 text-gray-400 hover:text-gray-600">
+                <X size={14} />
+              </button>
+            )}
           </div>
           {historyLoading ? (
             <p className="text-xs text-gray-400 text-center py-4">กำลังโหลด...</p>

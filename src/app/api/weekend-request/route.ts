@@ -26,34 +26,23 @@ async function ensureTable() {
 export async function GET(req: NextRequest) {
   await ensureTable();
   const { searchParams } = new URL(req.url);
-  const workDate = searchParams.get('work_date') || '';
-  const department = searchParams.get('department') || '';
-  const controller = searchParams.get('controller') || '';
-  const wpNo = searchParams.get('wp_no') || '';
+  const q = searchParams.get('q') || '';
 
   try {
     const pool = await getPool();
     const request = pool.request();
-    const conditions: string[] = [];
+    let where = '';
 
-    if (workDate) {
-      request.input('workDate', sql.NVarChar(30), `%${workDate}%`);
-      conditions.push("CONVERT(NVARCHAR(10), Work_Date, 120) LIKE @workDate");
-    }
-    if (department) {
-      request.input('dept', sql.NVarChar(100), `%${department}%`);
-      conditions.push('Department LIKE @dept');
-    }
-    if (controller) {
-      request.input('ctrl', sql.NVarChar(300), `%${controller}%`);
-      conditions.push('Controller LIKE @ctrl');
-    }
-    if (wpNo) {
-      request.input('wpNo', sql.NVarChar(50), `%${wpNo}%`);
-      conditions.push('WP_No LIKE @wpNo');
+    if (q) {
+      request.input('q', sql.NVarChar(300), `%${q}%`);
+      where = `WHERE CONVERT(NVARCHAR(10), Work_Date, 120) LIKE @q
+        OR Department LIKE @q
+        OR Controller LIKE @q
+        OR ISNULL(WP_No, '') LIKE @q
+        OR Job_Detail LIKE @q
+        OR Area LIKE @q`;
     }
 
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const result = await request.query(
       `SELECT * FROM dbo.Weekend_Request ${where} ORDER BY Work_Date DESC, ID DESC`
     );

@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
   .sig-box { text-align: center; }
   .sig-line { border-top: 1px solid #000; margin-top: 50px; padding-top: 5px; font-size: 10pt; }
   .doc-footer { position: fixed; bottom: 0; left: 0; right: 0; font-size: 8.5pt; color: #555; }
-  .doc-footer-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 3px; }
+เป  .doc-footer-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 3px; }
   .doc-footer-line { border: none; border-top: 1px solid #000; margin: 0; }
   .doc-footer-page { text-align: center; padding-top: 3px; font-size: 8.5pt; color: #555; }
   .print-info { text-align: center; font-size: 8pt; color: #bbb; margin-top: 20px; padding-top: 6px; border-top: 1px solid #eee; }
