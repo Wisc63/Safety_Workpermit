@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureNetworkAccess } from '@/lib/network-auth';
 import fs from 'fs';
 import path from 'path';
 
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing file or Work Permit No' }, { status: 400 });
     }
 
+    ensureNetworkAccess();
     const year = wpNo.substring(1, 5);
     const uncPath = `\\\\192.168.42.41\\public\\SHE\\Work Permit\\${year}`;
 

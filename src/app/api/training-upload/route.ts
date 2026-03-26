@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureNetworkAccess } from '@/lib/network-auth';
 import fs from 'fs';
 import path from 'path';
 
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const uncPath = '\\\\192.168.42.41\\Public\\SHE\\Work Permit\\Training Record';
+    ensureNetworkAccess();
     if (!fs.existsSync(uncPath)) {
       fs.mkdirSync(uncPath, { recursive: true });
     }
