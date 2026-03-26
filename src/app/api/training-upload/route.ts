@@ -16,7 +16,9 @@ export async function POST(req: NextRequest) {
     }
 
     const uncPath = '\\\\192.168.42.41\\Public\\SHE\\Work Permit\\Training Record';
-    fs.mkdirSync(uncPath, { recursive: true });
+    if (!fs.existsSync(uncPath)) {
+      fs.mkdirSync(uncPath, { recursive: true });
+    }
 
     const safeFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
     const filePath = path.join(uncPath, safeFileName);
