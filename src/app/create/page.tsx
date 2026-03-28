@@ -175,8 +175,7 @@ export default function CreatePage() {
 
   const validateForm = (): string | null => {
     if (selectedContractors.length === 0) return 'กรุณาเลือกผู้รับเหมาอย่างน้อย 1 ราย';
-    const expiredForeman = selectedContractors.find(c => c.trainingStatus === 'Expired');
-    if (expiredForeman) return `Foreman "${expiredForeman.workerName}" มีสถานะ Expired กรุณาอัปเดตการฝึกอบรมก่อน`;
+
     if (!form.Request_For.trim()) return 'กรุณากรอก Request For';
     if (!form.Area.trim()) return 'กรุณากรอก Area';
     if (!form.Start_Date) return 'กรุณาเลือก Start Date';
@@ -354,7 +353,12 @@ export default function CreatePage() {
                   <SelectContent>
                     {availableForemen.map(f => (
                       <SelectItem key={f.ID} value={String(f.ID)}>
-                        {f.Worker_Name} ({f.Worker_Tel}){f.Training_status === 'Expired' ? ' ⚠️ Expired' : ''}
+                        <span>
+                          {f.Worker_Name} ({f.Worker_Tel}){' '}
+                          <span className={f.Training_status === 'Allowed' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                            [{f.Training_status}]
+                          </span>
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -371,7 +375,11 @@ export default function CreatePage() {
                     <div>
                       <span className="font-medium">{c.contractor}</span>
                       <span className="text-gray-500 ml-2">{c.workerName} | {c.workerTel}</span>
-                      {c.trainingStatus === 'Expired' && <span className="ml-2 text-red-500 text-xs font-semibold">⚠️ Expired</span>}
+                      {c.trainingStatus && (
+                        <span className={`ml-2 text-xs font-semibold ${c.trainingStatus === 'Allowed' ? 'text-green-600' : 'text-red-500'}`}>
+                          {c.trainingStatus === 'Expired' ? '⚠️ ' : ''}{c.trainingStatus}
+                        </span>
+                      )}
                     </div>
                     <Button
                       variant="ghost"

@@ -6,8 +6,8 @@ import { useState, useEffect } from 'react';
 import { ShieldCheck, FileText, Users, Building2, Calendar, LogOut, LogIn, User } from 'lucide-react';
 import LoginModal from './LoginModal';
 
-const APP_VERSION = 'Rev.2';
-const APP_DATE    = '09/03/2026';
+const APP_VERSION = 'Rev.3';
+const APP_DATE    = '28/03/2026';
 const APP_AUTHOR  = 'Wis';
 const APP_COPYRIGHT = 'SMPC';
 

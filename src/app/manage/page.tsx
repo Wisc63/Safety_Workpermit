@@ -24,6 +24,7 @@ interface WorkPermit {
   Created_Date: string;
   Contractor: string;
   Contractor_Tel: string;
+  Foreman_Name: string;
   Request_For: string;
   Area: string;
   Start_Date: string;
@@ -42,6 +43,15 @@ interface Personnel {
   ID: number;
   Department: string;
   Person_Name: string;
+}
+
+interface Contractor {
+  ID: number;
+  Contractor: string;
+  Worker_Name: string;
+  Worker_Tel: string;
+  Worker_Position: string;
+  Training_status: string;
 }
 
 function formatDateDisplay(dateStr: string): string {
@@ -77,6 +87,7 @@ export default function ManagePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [workPermits, setWorkPermits] = useState<WorkPermit[]>([]);
   const [shePersonnel, setShePersonnel] = useState<Personnel[]>([]);
+  const [contractors, setContractors] = useState<Contractor[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchQ, setSearchQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -93,12 +104,13 @@ export default function ManagePage() {
     const apiStatuses = statusFilter.flatMap(s => s === 'Expired' ? ['Open', 'Approved'] : [s]);
     const uniqueStatuses = Array.from(new Set(apiStatuses));
     const statusParam = uniqueStatuses.length > 0 ? uniqueStatuses.join(',') : '';
-    const [wpRes, pRes, authRes] = await Promise.all([
+    const [wpRes, pRes, authRes, cRes] = await Promise.all([
       fetch(`/api/workpermit?q=${encodeURIComponent(searchQ)}&status=${encodeURIComponent(statusParam)}`),
       fetch('/api/personnel?department=SHE'),
       fetch('/api/auth'),
+      fetch('/api/contractor'),
     ]);
-    const [wp, p, auth] = await Promise.all([wpRes.json(), pRes.json(), authRes.json()]);
+    const [wp, p, auth, c] = await Promise.all([wpRes.json(), pRes.json(), authRes.json(), cRes.json()]);
     const allWp = Array.isArray(wp) ? wp : [];
     // Client-side filter for Expired
     const filtered = statusFilter.length === 0 ? allWp : allWp.filter(w => {
@@ -108,6 +120,7 @@ export default function ManagePage() {
     setWorkPermits(filtered);
     setShePersonnel(Array.isArray(p) ? p : []);
     setIsAdmin(auth.isAdmin || false);
+    setContractors(Array.isArray(c) ? c : []);
   }, [searchQ, statusFilter]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -132,6 +145,21 @@ export default function ManagePage() {
     if (!safetyOfficer) {
       toast({ title: 'กรุณาเลือก Safety Officer', variant: 'destructive' });
       return;
+    }
+    if (selectedWP?.Foreman_Name) {
+      const foremanNames = selectedWP.Foreman_Name.split(', ').map((n: string) => n.trim());
+      const expiredForeman = foremanNames.find((name: string) => {
+        const found = contractors.find(c => c.Worker_Name === name);
+        return found && found.Training_status !== 'Allowed';
+      });
+      if (expiredForeman) {
+        toast({
+          title: 'ไม่สามารถอนุมัติได้',
+          description: `Foreman ${expiredForeman} มีสถานะการฝึกอบรมไม่ผ่าน (Expired) กรุณาอัปเดตการฝึกอบรมก่อนอนุมัติ`,
+          variant: 'destructive',
+        });
+        return;
+      }
     }
     setCaptchaAction('approve');
     setCaptchaOpen(true);
@@ -380,6 +408,28 @@ export default function ManagePage() {
                   <p className="text-xs text-gray-500">Contractor</p>
                   <p className="font-medium text-xs">{selectedWP.Contractor}</p>
                 </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500">Foreman / Tel / Training Status</p>
+                  {selectedWP.Foreman_Name
+                    ? selectedWP.Foreman_Name.split(', ').map((name: string, idx: number) => {
+                        const tel = selectedWP.Contractor_Tel?.split(', ')[idx] || '-';
+                        const found = contractors.find(c => c.Worker_Name === name.trim());
+                        const status = found?.Training_status;
+                        return (
+                          <div key={idx} className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-xs">{name.trim()}</span>
+                            <span className="text-xs text-gray-400">| {tel}</span>
+                            {status && (
+                              <span className={`text-xs font-semibold ${status === 'Allowed' ? 'text-green-600' : 'text-red-500'}`}>
+                                {status === 'Expired' ? '⚠️ ' : ''}{status}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })
+                    : <p className="text-xs text-gray-400">-</p>
+                  }
+                </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <p className="text-gray-500">Start Date</p>
@@ -460,13 +510,29 @@ export default function ManagePage() {
                           <span className="font-bold">!</span> ต้องเลือก Safety Officer ก่อนอนุมัติ
                         </p>
                       )}
-                      <Button
-                        className={`w-full text-white text-xs h-9 font-semibold gap-1 ${safetyOfficer ? 'bg-green-600 hover:bg-green-700' : 'bg-green-300 cursor-not-allowed'}`}
-                        onClick={handleApproveClick}
-                        disabled={!safetyOfficer}
-                      >
-                        <CheckCircle2 size={14} /> อนุมัติ (Approved)
-                      </Button>
+                      {(() => {
+                        const expiredForeman = selectedWP.Foreman_Name?.split(', ').find((name: string) => {
+                          const found = contractors.find(c => c.Worker_Name === name.trim());
+                          return found && found.Training_status !== 'Allowed';
+                        });
+                        const canApprove = !!safetyOfficer && !expiredForeman;
+                        return (
+                          <>
+                            {expiredForeman && (
+                              <p className="text-xs text-red-600 flex items-center gap-1 bg-red-50 border border-red-200 rounded px-2 py-1">
+                                <span className="font-bold">⚠️</span> Foreman &quot;{expiredForeman.trim()}&quot; สถานะ Expired — ไม่สามารถอนุมัติได้
+                              </p>
+                            )}
+                            <Button
+                              className={`w-full text-white text-xs h-9 font-semibold gap-1 ${canApprove ? 'bg-green-600 hover:bg-green-700' : 'bg-green-300 cursor-not-allowed'}`}
+                              onClick={handleApproveClick}
+                              disabled={!canApprove}
+                            >
+                              <CheckCircle2 size={14} /> อนุมัติ (Approved)
+                            </Button>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
 

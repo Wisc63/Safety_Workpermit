@@ -24,7 +24,7 @@ interface PersonnelItem {
   Personnel_Tel: string | null;
   Personnel_Position: string | null;
 }
-interface ContractorItem { ID: number; Contractor: string; Worker_Name: string; Worker_Position: string; }
+interface ContractorItem { ID: number; Contractor: string; Worker_Name: string; Worker_Position: string; Training_status: string; }
 interface WPItem { Work_Permit_No: string; Contractor: string; Foreman_Name: string; Contractor_Tel: string; }
 interface Employee { name: string; position: string; note: string; }
 interface WeekendRecord {
@@ -157,7 +157,7 @@ export default function WeekendPage() {
   const selectContractorForRow = (i: number, workerName: string) => {
     const worker = filteredContractorWorkers.find(c => c.Worker_Name === workerName);
     setEmployees(prev => prev.map((e, idx) => idx === i
-      ? { ...e, name: workerName, position: worker?.Worker_Position || '' } : e));
+      ? { ...e, name: workerName, position: worker?.Worker_Position || '', note: worker?.Training_status || '' } : e));
   };
 
   const handleClear = () => {
@@ -492,13 +492,16 @@ export default function WeekendPage() {
                           placeholder={!area.trim() || !rowEnabled ? '' : 'ตำแหน่ง...'}
                           disabled={!area.trim() || !rowEnabled} />
                       </td>
-                      <td className="border border-gray-200 px-1 py-0.5">
+                      <td className="border border-gray-200 px-1 py-0 relative">
                         <Input value={emp.note} onChange={e => updateEmp(i, 'note', e.target.value)}
-                          className="text-xs h-7 border-0 shadow-none bg-transparent focus-visible:ring-0 px-2 font-normal"
+                          className={`!text-xs h-7 border-0 shadow-none bg-transparent focus-visible:ring-0 px-2 font-normal ${
+                            emp.note === 'Allowed' ? '!text-green-600' :
+                            emp.note === 'Expired' ? '!text-red-600' : ''
+                          }`}
                           placeholder={!area.trim() || (!rowEnabled && i !== 0) ? '' : '...'}
                           disabled={!area.trim() || !rowEnabled}
                           maxLength={50} />
-                        {area.trim() && rowEnabled && <p className="text-right text-[10px] text-gray-400 pr-1 leading-none pb-0.5">{emp.note.length}/50</p>}
+                        {area.trim() && rowEnabled && <p className="absolute bottom-0.5 right-1 text-[10px] text-gray-400 leading-none pointer-events-none">{emp.note.length}/50</p>}
                       </td>
                     </tr>
                   );
