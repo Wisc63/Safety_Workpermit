@@ -257,7 +257,6 @@ export default function WeekendPage() {
     } finally { setPrinting(false); }
   };
 
-  const handleSearch = () => loadHistory(searchQ);
   const handleClearSearch = () => {
     setSearchQ('');
     loadHistory();

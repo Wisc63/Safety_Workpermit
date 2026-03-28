@@ -66,7 +66,11 @@ export default function Navbar() {
         <div className="max-w-screen-2xl mx-auto px-4 flex items-center h-14 gap-3">
 
           {/* SMPC Logo */}
-          <div className="hidden sm:flex items-center pr-3 border-r border-gray-200 flex-shrink-0">
+          <div
+            className="hidden sm:flex items-center pr-3 border-r border-gray-200 flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+            onClick={() => { window.location.href = 'http://192.168.42.103:3000'; }}
+            title="กลับ Portal"
+          >
             <Image
               src="/SMPC_logo_NOBG.png"
               alt="SMPC Logo"
